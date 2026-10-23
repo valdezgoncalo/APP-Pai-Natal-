@@ -5,6 +5,6 @@
  * NUNCA coloques aqui a chave service_role/secret.
  */
 window.SUPABASE_CONFIG = {
-  url: "sb_publishable_7f4GfDV2j6rsfvqm10prwA_UicQmASS",
+  url: "https://lukoaousndrwgkrglnrj.supabase.co/rest/v1/",
   publishableKey: "sb_publishable_7f4GfDV2j6rsfvqm10prwA_UicQmASS"
 };
