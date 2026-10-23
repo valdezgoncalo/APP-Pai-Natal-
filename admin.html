@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123d2d">
+  <title>Administração | O Mundo do Pai Natal</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{background:#f4f6f2;color:#19392d}.admin-wrap{max-width:1000px;margin:32px auto;padding:0 18px 48px}
+    .admin-panel{background:#fff;border:1px solid #dfe7df;border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 8px 28px #123d2d0b}
+    .admin-panel h2{margin-top:0}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .admin-field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.admin-field label{font-weight:700;font-size:.92rem}
+    .admin-field input,.admin-field textarea,.admin-field select{font:inherit;padding:11px;border:1px solid #cbd8ce;border-radius:10px;width:100%;box-sizing:border-box;background:#fff;color:#19392d}
+    .admin-field textarea{min-height:120px;resize:vertical}.admin-status{padding:12px;border-radius:10px;background:#edf5ed;margin:12px 0;white-space:pre-wrap}
+    .admin-status.error{background:#fff0ed;color:#8a2f22}.admin-hidden{display:none!important}.admin-nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    .admin-list{padding-left:20px}.admin-list li{margin:8px 0}.admin-small{font-size:.88rem;color:#617166}
+    .map-pick{height:320px;border-radius:12px;overflow:hidden;background:#e7eee7;margin:10px 0}
+    .topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="44" height="44"><span><strong>O Mundo do Pai Natal</strong><small>Painel de administração</small></span></a>
+  </header>
+  <main class="admin-wrap">
+    <div class="topline"><div><span class="eyebrow">ÁREA PRIVADA</span><h1>Centro de controlo 🎅</h1><p class="admin-small">Publica contos, aventuras, fotografias, vídeos e localizações.</p></div><a class="button button-ghost" href="index.html">Ver site ↗</a></div>
+    <div id="setupWarning" class="admin-status error admin-hidden"></div>
+    <section id="loginPanel" class="admin-panel">
+      <h2>Entrar como administrador</h2>
+      <p class="admin-small">A conta tem de existir em Supabase Authentication e ter um perfil com papel admin/editor/event_manager/moderator.</p>
+      <form id="loginForm">
+        <div class="admin-field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" required></div>
+        <div class="admin-field"><label for="password">Palavra-passe</label><input id="password" type="password" autocomplete="current-password" required></div>
+        <button class="button button-gold" type="submit">Entrar</button>
+      </form>
+      <div id="loginStatus" class="admin-status" role="status">Configura primeiro supabase-config.js e executa o SQL incluído na pasta supabase.</div>
+    </section>
+
+    <section id="dashboard" class="admin-hidden">
+      <div class="admin-panel"><div class="topline"><h2>Olá, administrador</h2><button id="logoutBtn" class="button button-ghost" type="button">Terminar sessão</button></div><p class="admin-small">As publicações passam a estar disponíveis no site depois de guardadas com estado “Publicado”.</p><div id="globalStatus" class="admin-status" role="status">Sessão iniciada.</div></div>
+      <section class="admin-panel">
+        <h2>1. Criar conto ou aventura</h2>
+        <form id="contentForm">
+          <div class="admin-grid">
+            <div class="admin-field"><label for="contentType">Tipo</label><select id="contentType"><option value="stories">Conto</option><option value="adventures">Aventura</option></select></div>
+            <div class="admin-field"><label for="contentTitle">Título</label><input id="contentTitle" required maxlength="160"></div>
+            <div class="admin-field"><label for="contentSlug">Endereço curto (slug)</label><input id="contentSlug" required placeholder="o-conto-de-hoje" pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></div>
+            <div class="admin-field"><label for="contentStatus">Estado</label><select id="contentStatus"><option value="draft">Rascunho</option><option value="published">Publicado</option></select></div>
+            <div class="admin-field"><label for="episode">Número do episódio (opcional)</label><input id="episode" type="number" min="1"></div>
+            <div class="admin-field"><label for="coverFile">Imagem de capa (opcional)</label><input id="coverFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          </div>
+          <div class="admin-field"><label for="contentExcerpt">Resumo (para aventuras)</label><textarea id="contentExcerpt" maxlength="500"></textarea></div>
+          <div class="admin-field"><label for="contentBody">Texto completo</label><textarea id="contentBody" required></textarea></div>
+          <button class="button button-gold" type="submit">Guardar conteúdo</button>
+        </form>
+      </section>
+
+      <section class="admin-panel">
+        <h2>2. Carregar fotografias e vídeos</h2>
+        <form id="mediaForm">
+          <div class="admin-grid">
+            <div class="admin-field"><label for="mediaTitle">Título</label><input id="mediaTitle" required maxlength="160"></div>
+            <div class="admin-field"><label for="mediaType">Tipo</label><select id="mediaType"><option value="image">Fotografia</option><option value="video">Vídeo</option></select></div>
+            <div class="admin-field"><label for="mediaAlbum">Álbum/evento</label><input id="mediaAlbum" placeholder="Ex.: Chegada a Águeda"></div>
+            <div class="admin-field"><label for="mediaFile">Ficheiro</label><input id="mediaFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm" required></div>
+            <div class="admin-field"><label for="mediaStatus">Estado</label><select id="mediaStatus"><option value="draft">Rascunho</option><option value="published">Publicado</option></select></div>
+          </div>
+          <div class="admin-field"><label for="mediaDescription">Legenda/descrição</label><textarea id="mediaDescription" maxlength="1000"></textarea></div>
+          <p class="admin-small">O bucket público aceita ficheiros até 50 MB. Só carregues ficheiros autorizados para publicação pública.</p>
+          <button class="button button-gold" type="submit">Carregar ficheiro e guardar</button>
+        </form>
+      </section>
+
+      <section class="admin-panel">
+        <h2>3. Adicionar PIN ao mapa</h2>
+        <p class="admin-small">Clica no mapa para escolher as coordenadas. Confirma sempre que o local e horário são públicos e corretos.</p>
+        <form id="eventForm">
+          <div class="admin-grid">
+            <div class="admin-field"><label for="eventTitle">Nome do evento</label><input id="eventTitle" required maxlength="160"></div>
+            <div class="admin-field"><label for="eventVenue">Local/recinto</label><input id="eventVenue" required></div>
+            <div class="admin-field"><label for="eventAddress">Morada pública</label><input id="eventAddress" required></div>
+            <div class="admin-field"><label for="eventStart">Data e hora de início</label><input id="eventStart" type="datetime-local" required></div>
+            <div class="admin-field"><label for="eventEnd">Data e hora de fim (opcional)</label><input id="eventEnd" type="datetime-local"></div>
+            <div class="admin-field"><label for="eventStatus">Estado</label><select id="eventStatus"><option value="draft">Rascunho</option><option value="published">Publicado</option></select></div>
+          </div>
+          <div class="admin-field"><label for="eventDescription">Descrição</label><textarea id="eventDescription" maxlength="1500"></textarea></div>
+          <div id="eventMap" class="map-pick" aria-label="Mapa para escolher a localização"></div>
+          <div class="admin-grid">
+            <div class="admin-field"><label for="eventLat">Latitude</label><input id="eventLat" type="number" step="any" required></div>
+            <div class="admin-field"><label for="eventLng">Longitude</label><input id="eventLng" type="number" step="any" required></div>
+          </div>
+          <button class="button button-gold" type="submit">Guardar evento</button>
+        </form>
+      </section>
+      <section class="admin-panel"><h2>Conteúdos recentes</h2><button id="refreshBtn" class="button button-ghost" type="button">Atualizar lista</button><ul id="recentList" class="admin-list"></ul></section>
+    </section>
+  </main>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="admin.js"></script>
+</body>
+</html>
